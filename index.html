@@ -1,0 +1,107 @@
+<!Doctype html>
+
+<head>
+		<title>Xylophone</title>
+<style>
+
+.xylophone {
+  display: flex;
+}
+
+.note {
+  flex: 1;
+  height: 100px;
+  background-color: #ddd;
+  cursor: pointer;
+}
+
+.note.active {
+  background-color: #ff0;
+}
+div {
+  display:  flex; 	
+  justify-content: center;
+  align-items: center;
+}
+  
+p {
+    color: red;
+  }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="xylophone">
+  <div class="note" data-note="C"><p>C</p></div>
+  <div class="note" data-note="D"><p>D</p></div>
+  <div class="note" data-note="E"><p>E</p></div>
+  <div class="note" data-note="F"><p>F</p></div>
+  <div class="note" data-note="G"><p>G</p></div>
+  <div class="note" data-note="A"><p>A</p></div>
+  <div class="note" data-note="B"><p>B</p></div>
+</div>
+
+<script>
+
+// get all the notes
+const notes = document.querySelectorAll('.note');
+
+// create an audio context
+const audioContext = new AudioContext();
+
+// create a map of note names to frequencies
+const noteFrequencies = {
+  C: 261.63,
+  D: 293.66,
+  E: 329.63,
+  F: 349.23,
+  G: 392.00,
+  A: 440.00,
+  B: 493.88
+};
+
+// add click event listeners to each note
+notes.forEach(note => {
+  note.addEventListener('click', () => {
+    // get the note name from the data attribute
+    const noteName = note.getAttribute('data-note');
+
+    // create an oscillator node
+    const oscillator = audioContext.createOscillator();
+    
+    // set the oscillator frequency to the note's frequency
+    oscillator.frequency.setValueAtTime(noteFrequencies[noteName], audioContext.currentTime);
+
+    // create a gain node
+    const gainNode = audioContext.createGain();
+    
+    // connect the oscillator to the gain node
+    oscillator.connect(gainNode);
+    
+    // connect the gain node to the audio context's destination
+    gainNode.connect(audioContext.destination);
+    
+    // start the oscillator
+    oscillator.start();
+    
+    // add a class to the note to show that it's active
+    note.classList.add('active');
+    
+    // stop the oscillator after 1 second
+    setTimeout(() => {
+      oscillator.stop();
+      
+      // remove the active class from the note
+      note.classList.remove('active');
+    }, 750);
+  });
+});
+
+</script>
+
+</body>
+
+</html>
