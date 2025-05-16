@@ -1,7 +1,6 @@
+<!-- newest-index.html -->
 
-<!-- index-newer.html  color only active when key is pressed -->
-
-<!-- couldn't get rid of clicking noise when iphone key was pressed.  Try iPad? -->
+<!-- has fadeout to workaround iPhone -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -23,33 +22,13 @@
       transition: background-color 0.2s ease;
     }
 
-    .note.active[data-note="C"] {
-      background-color: maroon;
-    }
-
-    .note.active[data-note="D"] {
-      background-color: teal;
-    }
-
-    .note.active[data-note="E"] {
-      background-color: purple;
-    }
-
-    .note.active[data-note="F"] {
-      background-color: fuchsia;
-    }
-
-    .note.active[data-note="G"] {
-      background-color: aqua;
-    }
-
-    .note.active[data-note="A"] {
-      background-color: lime;
-    }
-
-    .note.active[data-note="B"] {
-      background-color: yellow;
-    }
+    .note.active[data-note="C"] { background-color: maroon; }
+    .note.active[data-note="D"] { background-color: teal; }
+    .note.active[data-note="E"] { background-color: purple; }
+    .note.active[data-note="F"] { background-color: fuchsia; }
+    .note.active[data-note="G"] { background-color: aqua; }
+    .note.active[data-note="A"] { background-color: lime; }
+    .note.active[data-note="B"] { background-color: yellow; }
 
     div {
       display: flex;
@@ -63,36 +42,21 @@
     }
   </style>
 </head>
-
 <body>
 
   <div class="xylophone">
-    <div class="note" data-note="C">
-      <p>C</p>
-    </div>
-    <div class="note" data-note="D">
-      <p>D</p>
-    </div>
-    <div class="note" data-note="E">
-      <p>E</p>
-    </div>
-    <div class="note" data-note="F">
-      <p>F</p>
-    </div>
-    <div class="note" data-note="G">
-      <p>G</p>
-    </div>
-    <div class="note" data-note="A">
-      <p>A</p>
-    </div>
-    <div class="note" data-note="B">
-      <p>B</p>
-    </div>
+    <div class="note" data-note="C"><p>C</p></div>
+    <div class="note" data-note="D"><p>D</p></div>
+    <div class="note" data-note="E"><p>E</p></div>
+    <div class="note" data-note="F"><p>F</p></div>
+    <div class="note" data-note="G"><p>G</p></div>
+    <div class="note" data-note="A"><p>A</p></div>
+    <div class="note" data-note="B"><p>B</p></div>
   </div>
 
   <script>
     const notes = document.querySelectorAll('.note');
-    const audioContext = new AudioContext();
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     const noteFrequencies = {
       C: 261.63,
@@ -104,26 +68,41 @@
       B: 493.88
     };
 
+    function playNote(noteElement) {
+      const noteName = noteElement.getAttribute('data-note');
+      const now = audioContext.currentTime;
+
+      const oscillator = audioContext.createOscillator();
+      oscillator.frequency.setValueAtTime(noteFrequencies[noteName], now);
+
+      const gainNode = audioContext.createGain();
+      gainNode.gain.setValueAtTime(1, now);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.start();
+
+      // Fade out gain smoothly
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+      // Stop oscillator slightly after gain fades
+      oscillator.stop(now + 0.35);
+
+      noteElement.classList.add('active');
+
+      setTimeout(() => {
+        noteElement.classList.remove('active');
+      }, 350);
+    }
+
+    // Handle both click and touchstart for mobile compatibility
     notes.forEach(note => {
-      note.addEventListener('click', () => {
-        const noteName = note.getAttribute('data-note');
-
-        const oscillator = audioContext.createOscillator();
-        oscillator.frequency.setValueAtTime(noteFrequencies[noteName], audioContext.currentTime);
-
-        const gainNode = audioContext.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.start();
-
-        note.classList.add('active');
-
-        setTimeout(() => {
-          oscillator.stop();
-          note.classList.remove('active');
-        }, 750);
-      });
+      note.addEventListener('mousedown', () => playNote(note));
+      note.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // prevent duplicate mousedown
+        playNote(note);
+      }, { passive: false });
     });
   </script>
 
